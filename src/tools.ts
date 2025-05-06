@@ -64,8 +64,8 @@ function getWordCountRegex(): RegExp {
       "g"
     );
 }
-
-export function getWordCount(text: string, filter: string): WordCount[] {
+export function getWordCount(textRaw: string, filter: string): WordCount[] {
+	const text = textRaw.replace(/\bhttps?:\/\/\S+/gi, "");
     const words = {} as Record<string, number>;
     const matchs = text.match(getWordCountRegex());
     if (matchs) {
