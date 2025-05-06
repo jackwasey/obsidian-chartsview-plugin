@@ -43,13 +43,12 @@ jobs:
       - name: Create or update GitHub Release & upload ZIP
         uses: ncipollo/release-action@v1
         with:
-          tag:              ${{ steps.get_version.outputs.version }}
-          commit:           main
-          artifacts:        ${{ steps.zip.outputs.zip_path }}
-          allowUpdates:     true
-          releaseName:      ${{ steps.get_version.outputs.version }}
+          tag:          ${{ steps.get_version.outputs.version }}
+          allowUpdates: true
+          name:         ${{ steps.get_version.outputs.version }}
           body: |
             ChartsView plugin build for version ${{ steps.get_version.outputs.version }}
             _(built via manual dispatch)_
+          artifacts:    ${{ steps.zip.outputs.zip_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
