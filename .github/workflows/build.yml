@@ -11,6 +11,11 @@ jobs:
     name: Build and Package
     runs-on: ubuntu-latest
 
+  permissions:
+    contents: read    # needed to checkout your code
+    actions: write    # needed to upload artifacts
+
+
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -27,7 +32,7 @@ jobs:
         run: npm run build
 
       - name: Upload dist artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: chartsview-dist
           path: dist/
