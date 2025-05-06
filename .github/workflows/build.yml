@@ -11,9 +11,9 @@ jobs:
     name: Build and Package
     runs-on: ubuntu-latest
 
-  permissions:
-    contents: read    # needed to checkout your code
-    actions: write    # needed to upload artifacts
+    permissions:
+      contents: read    # needed to checkout your code
+      actions: write    # needed to upload artifacts
 
 
     steps:
