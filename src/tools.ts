@@ -8,6 +8,11 @@ type WordCount = {
 
 export const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
+/**
+ * Minimum number of occurrences before a word shows up in the chart.
+ */
+export const DEFAULT_MIN_COUNT = 2;
+
 export function insertEditor(editor: Editor, data: string): void {
     editor.somethingSelected
     ?
@@ -64,6 +69,22 @@ function getWordCountRegex(): RegExp {
       "g"
     );
 }
+
+/**
++ * Count word occurrences (after stripping URLs) and return
++ * a map: word → count.
+ */
+export function getWordFrequencies(text: string): Record<string, number> {
+  // strip URLs so they never get counted
+  const cleaned = text.replace(/\bhttps?:\/\/\S+/gi, "");
+  const matches = cleaned.match(getWordCountRegex()) || [];
+  const freq: Record<string, number> = {};
+  for (const w of matches) {
+    freq[w] = (freq[w] || 0) + 1;
+  }
+  return freq;
+}
+
 export function getWordCount(textRaw: string, filter: string): WordCount[] {
 	const text = textRaw.replace(/\bhttps?:\/\/\S+/gi, "");
     const words = {} as Record<string, number>;
