@@ -1,58 +1,52 @@
 name: Build & Release ChartsView
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
 
 permissions:
-  contents: write    # needed for create‑release & upload‑release‑asset
+  contents: write     # needed to create / update the GitHub Release
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
-    outputs:
-      dist_folder: ${{ steps.build.outputs.dist_folder }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
-        with: { node-version: '18' }
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - id: build
+      - name: Read version from package.json
+        id: get_version
         run: |
-          npm run build
-          echo "::set-output name=dist_folder::$(pwd)/dist"
+          echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
+      - name: Build (production)
+        run: npm run build
 
-    steps:
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Zip dist folder
+        id: zip
+        run: |
+          ZIP_NAME=chartsview-${{ steps.get_version.outputs.version }}.zip
+          zip -r "$ZIP_NAME" dist
+          echo "zip_path=$(pwd)/$ZIP_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create or update GitHub Release & upload ZIP
+        uses: ncipollo/release-action@v1
+        with:
+          tag:              ${{ steps.get_version.outputs.version }}
+          commit:           main
+          artifacts:        ${{ steps.zip.outputs.zip_path }}
+          allowUpdates:     true
+          releaseName:      ${{ steps.get_version.outputs.version }}
+          body:             |
+                              ChartsView plugin build for version ${{ steps.get_version.outputs.version }}
+                              _(built via manual dispatch)_
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name:      ${{ github.ref_name }}
-          release_name:  ${{ github.ref_name }}
-          body:          Automatically built ChartsView ${{ github.ref_name }}
-          draft:         false
-          prerelease:    false
-          # outputs: id, html_url, and upload_url :contentReference[oaicite:0]{index=0}
-
-      - name: Upload plugin ZIP
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url:        ${{ steps.create_release.outputs.upload_url }}
-          asset_path:        ${{ needs.build.outputs.dist_folder }}
-          asset_name:        chartsview-plugin-${{ github.ref_name }}.zip
-          asset_content_type: application/zip
-          # upload_url is required and comes from create‑release :contentReference[oaicite:1]{index=1}
