@@ -40,7 +40,7 @@ jobs:
             versions.json
           echo "::set-output name=zip_path::$(pwd)/$ZIP_NAME"
 
-      - name: Create or update GitHub Release & upload ZIP
+      - name: Create or update GitHub Release & upload plugin assets
         uses: ncipollo/release-action@v1
         with:
           tag:          ${{ steps.get_version.outputs.version }}
@@ -49,6 +49,6 @@ jobs:
           body: |
             ChartsView plugin build for version ${{ steps.get_version.outputs.version }}
             _(built via manual dispatch)_
-          artifacts:    ${{ steps.zip.outputs.zip_path }}
+          artifacts:    main.js,manifest.json,styles.css
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
