@@ -4,49 +4,46 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write     # needed to create / update the GitHub Release
+  contents: write
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
       - name: Read version from package.json
         id: get_version
         run: |
-          echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+          VERSION=$(node -p "require('./package.json').version")
+          echo "::set-output name=version::$VERSION"
 
-      - name: Build (production)
-        run: npm run build
+      - run: npm run build
 
       - name: Zip dist folder
         id: zip
         run: |
           ZIP_NAME=chartsview-${{ steps.get_version.outputs.version }}.zip
           zip -r "$ZIP_NAME" dist
-          echo "zip_path=$(pwd)/$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "::set-output name=zip_path::$(pwd)/$ZIP_NAME"
 
       - name: Create or update GitHub Release & upload ZIP
         uses: ncipollo/release-action@v1
         with:
-          tag:              ${{ steps.get_version.outputs.version }}
-          commit:           main
-          artifacts:        ${{ steps.zip.outputs.zip_path }}
-          allowUpdates:     true
-          releaseName:      ${{ steps.get_version.outputs.version }}
-          body:             |
-                              ChartsView plugin build for version ${{ steps.get_version.outputs.version }}
-                              _(built via manual dispatch)_
+          tag:          ${{ steps.get_version.outputs.version }}
+          commit:       main
+          artifacts:    ${{ steps.zip.outputs.zip_path }}
+          allowUpdates: true
+          releaseName:  ${{ steps.get_version.outputs.version }}
+          body: |
+            ChartsView plugin build for version ${{ steps.get_version.outputs.version }}
+            _(built via manual dispatch)_
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
